@@ -21,6 +21,7 @@ Imports:
     gtools,
     methods,
     doFuture, 
+    foreach,
     lubridate,
     move,
     progressr
