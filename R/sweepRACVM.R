@@ -19,13 +19,13 @@ sweepRACVM <- function(Z, ...) UseMethod("sweepRACVM")
 #' @export
 #' @rdname sweepRACVM
 sweepRACVM.default <- function(Z, T,
-                       windowsize, 
-                       windowstep, 
-                       model = "UCVM", 
-                       progress = TRUE,  
-                       time.unit = "hours",
-                       ..., 
-                       .parallel = FALSE){
+                               windowsize, 
+                               windowstep, 
+                               model = "UCVM", 
+                               progress = TRUE,  
+                               time.unit = "hours",
+                               ..., 
+                               .parallel = FALSE){
   if(!is.complex(Z) && (ncol(Z) == 2)) Z <- Z[,1] + 1i*Z[,2]
   T.raw <- T
   if(inherits(T.raw, "POSIXt"))
@@ -36,7 +36,7 @@ sweepRACVM.default <- function(Z, T,
   cut.wstep <- cut(T, c(seq(min(T), max(T) - windowsize, windowstep), max(T)+1), include.lowest = TRUE, labels = FALSE)
   starts <- c(0, which(diff(cut.wstep) == 1))
   ends <- c(sapply(starts[-1], function(s) which.max(T[T < (T[s] + windowsize)])), length(T))
-
+  
   getLLbreaks <- function(start, end, breaks, Z, T, ...){
     require(smoove)
     lls <- breaks*NA
@@ -57,13 +57,26 @@ sweepRACVM.default <- function(Z, T,
   }
   
   if(.parallel){
-    LLs <- foreach(start = starts, end = ends, .combine = "cbind")  %dopar% {
-      mywindow <- end - start
-      breaks <- round(mywindow*.2):round(mywindow*.8)
-      getLLbreaks(start, end, breaks, Z, T, ...)
+    if(progress) {
+      require(progressr)
+      progressr::handlers(global = TRUE)
+      n <- length(starts)
+      p <- progressr::progressor(along = 1:n)
+      LLs <- foreach(start = starts, end = ends, .combine = "cbind") %dopar% {
+        p()
+        mywindow <- end - start
+        breaks <- round(mywindow*.2):round(mywindow*.8)
+        getLLbreaks(start, end, breaks, Z, T, ...)
+      }
+    } else {
+      LLs <- foreach(start = starts, end = ends, .combine = "cbind")  %dopar% {
+        mywindow <- end - start
+        breaks <- round(mywindow*.2):round(mywindow*.8)
+        getLLbreaks(start, end, breaks, Z, T, ...)
+      }
     }
   }
-
+  
   if(!.parallel){
     LLs <- matrix(NA, ncol = length(starts), nrow = length(T))
     for(i in 1:length(starts)){
@@ -74,10 +87,10 @@ sweepRACVM.default <- function(Z, T,
       breaks <- round(mywindow*.2):round(mywindow*.8)
       
       if(progress)
-      cat(paste("sweep", i, "of", length(starts), "- data points", start, "to", end, "\n"))
+        cat(paste("sweep", i, "of", length(starts), "- data points", start, "to", end, "\n"))
       if(mywindow < 10)
-          warning("Too few (less than 10) data points in this analysis window. I'll skip it and move on.") else
-      LLs[,i] <- getLLbreaks(start, end, breaks, Z, T, ...)
+        warning("Too few (less than 10) data points in this analysis window. I'll skip it and move on.") else
+          LLs[,i] <- getLLbreaks(start, end, breaks, Z, T, ...)
     }
   }
   
@@ -101,9 +114,9 @@ sweepRACVM.data.frame <- function(Z, ...){
 #' @rdname sweepRACVM
 sweepRACVM.ltraj <- function(Z, ...){
   if(requireNamespace("adehabitatLT",quietly = TRUE)){
-  ltraj <- adehabitatLT::ld(Z)
-  sweepRACVM(Z= ltraj[,c('x','y')],
-             T=ltraj$date, ...)
+    ltraj <- adehabitatLT::ld(Z)
+    sweepRACVM(Z= ltraj[,c('x','y')],
+               T=ltraj$date, ...)
   }
   else
     warning("First load adehabitatLT package using library(adehabitatLT) and then call this function on ltraj objects")
