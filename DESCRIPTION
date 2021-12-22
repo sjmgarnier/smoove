@@ -20,9 +20,10 @@ Imports:
     scales,
     gtools,
     methods,
-    foreach, 
+    doFuture, 
     lubridate,
-    move
+    move,
+    progressr
 LinkingTo: Rcpp, RcppArmadillo
 VignetteBuilder: knitr
 BugReports: https://github.com/EliGurarie/smoove/issues
