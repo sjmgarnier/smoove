@@ -58,7 +58,6 @@ sweepRACVM.default <- function(Z, T,
   
   if(.parallel){
     if(progress) {
-      require(progressr)
       progressr::handlers(global = TRUE)
       n <- length(starts)
       p <- progressr::progressor(along = 1:n)

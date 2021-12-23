@@ -9,12 +9,12 @@ output:
     toc_depth: 2
 vignette: >
   %\VignetteIndexEntry{smoove}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, cache=TRUE)
+knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Abstract
@@ -57,7 +57,7 @@ $$V_{i+1} =  V_i - V_i (dt/\tau) + \frac{2 \nu}{\sqrt{\pi \tau}} dW_i$$
 where $V$ is a vector of complex numbers and $dW_i$ is drawn from a bivariate normal distribution with variance $\sqrt{dt}$.  The direct method provides good simulations relatively quickly at high resolution ($\Delta t \ll \tau$). 
 
 Loading the package (and ancillary useful packages):
-```{r loading_cvm,warning=FALSE,message=FALSE,cache=FALSE}
+```{r loading_cvm,warning=FALSE,message=FALSE}
 require(smoove)
 require(magrittr)
 require(plyr)
@@ -66,7 +66,7 @@ require(scales)
 
 Note, `smoove` has many dependencies related to matrix manipulations.  A simulation of a track with $\nu=2$, $\tau=5$, for a time interval of 1000:
 
-```{r ucvm1, cache=TRUE}
+```{r ucvm1}
 nu <- 2
 tau <- 5
 dt <- .1 
@@ -81,7 +81,7 @@ str(ucvm1)
 
 The curve can be plotted in several ways:
 
-```{r FirstPlot, echo=-1, fig.height=3, cache=TRUE, fig.width = 6}
+```{r FirstPlot, echo=-1, fig.height=3, fig.width = 6}
 par(mfrow=c(1,3), bty="l", mar = c(4,4,1,1))
 plot(ucvm1$Z, asp=1, type="l", main = "plotting Z")
 plot(ucvm1$XY, asp=1, type="l", main = "plotting XY")
@@ -106,7 +106,7 @@ Close enough!
 
 The *exact* method is more flexible, as it samples the position and velocity process simultaneously from the complete mean and variance-covariance structure of the integreated OU process.  The main advantage is that the process can be simulated for irregular (and totally arbitrary) times of observation:
 
-```{r ucvm.exact, echo=-1, fig.height=4, cache=TRUE, fig.width = 6, echo = -1}
+```{r ucvm.exact, echo=-1, fig.height=4, fig.width = 6, echo = -1}
 set.seed(2)
 par(mar = c(0,3,0,0), oma = c(4,2,2,2), mgp = c(2,0.5,0), tck=-0.01, xpd=NA, bty="l", las=1)
 T <- cumsum(rexp(100))
@@ -130,13 +130,13 @@ with(ucvm2, mean(Mod(V)) + c(-2,2)*sd(Mod(V)) / sqrt(length(V)))
 
 The (R/A)CVM models are parameterized in terms of $\tau$, the random rms speed $\eta$, and then some combination of the advection vector $\mu$ and/or angular speed $\omega$. 
 
-```{r simulateRACVM, cache=TRUE}
+```{r simulateRACVM}
 rcvm <- simulateRACVM(tau = 6, eta = 2, omega = 1, mu = 0, Tmax = 1000, dt = .1)
 acvm <- simulateRACVM(tau = 6, eta = 2, omega = 0, mu = 2, Tmax = 1000, dt = .1)
 racvm <- simulateRACVM(tau = 6, eta = 2, omega = 1, mu = 1, Tmax = 1000, dt = .1)
 ```
 
-```{r plotRACVM, cache=TRUE, echo=-1, fig.height=4, bty="l", fig.width = 6}
+```{r plotRACVM, echo=-1, fig.height=4, bty="l", fig.width = 6}
 layout(rbind(c(1,2,2),c(1,3,3))); par(bty="l", mar = c(3,3,3,1), mgp = c(2,0.5,0), tck=0.01)
 plot_track(rcvm$Z[rcvm$T < 100],  main = "RCVM")
 plot_track(acvm$Z[acvm$T < 100], main = "ACVM")
@@ -170,7 +170,7 @@ head(ucvm.vaf)
 
 A plot of the four curves and their respective empirical autocovariance functions:
 
-```{r EVAFplots, echo = -1, cache=TRUE, fig.width=6, fig.height = 6}
+```{r EVAFplots, echo = -1, fig.width=6, fig.height = 6}
 layout(cbind(1:4*2-1, 1:4*2, 1:4*2)); par(mar=c(3,2,2,0), oma = c(4,2,2,2), bty="l", mgp=c(1.5,0,0), tck=0.01, xpd=NA, las=1)
 plot_track(ucvm1$Z[1:1e3], main = "UCVM"); plot(ucvm.vaf, type="l", lwd=1.5)
 plot_track(acvm$Z[1:1e3], main = "ACVM"); plot(acvm.vaf, type="l", lwd=1.5)
@@ -193,22 +193,22 @@ Following the structure of the Gurarie at al 2017, the UCVM, which focuses on es
 This method relies on fitting the *empirical* velocity autocorrelation function (above) to the *theoretical* velocity autocorrelation function:
 $$C_v(\Delta t) = {4 \over \pi} \nu^2 \exp(\Delta t / \tau)$$
 
-```{r VAF1, fig.height=4, echo=-1, cache=TRUE, fig.width = 6}
+```{r VAF1, fig.height=4, echo=-1, fig.width = 6}
 par(bty="l", mgp = c(1.5,0.25,0), tck=0.01, las=2)
 estimateUCVM(Z = ucvm1$Z, T = ucvm1$T, method = "vaf", diagnose = TRUE, CI=TRUE)
 ```
 The diagnostic plot (only plotted with `diagnose=TRUE`) illustrates the quality of the fit.  The estimates should be fairly good, when compared to the true parameters: 
-```{r cache=FALSE}
+```{r}
 ucvm1$parameters[1:2]
 ```
 A lower-resolution track will have wider confidence intervals:
-```{r VAF.lores, cache=TRUE}
+```{r VAF.lores}
 ucvm.lores <- simulateUCVM(nu=10, tau = 4, dt = 1, T.max = 1000, method = "exact")	
 with(ucvm.lores, estimateUCVM(Z = Z, T = T, CI=TRUE, method="vaf"))
 ```
 
 The speed estimate might be improved by using a spline correction
-```{r VAF.lores.splined, cache=TRUE}
+```{r VAF.lores.splined}
 with(ucvm.lores, estimateUCVM(Z = Z, T = T, CI=TRUE, method="vaf", spline = TRUE))
 ```
 
@@ -233,12 +233,12 @@ The diagnosis plots (crudely) illustrates the standard autocorrelation function 
 
 The velocity likelihood method uses the known distributional properties of the integrated OU obtain a "one-step" likelihood of each velocity based on the previous velocity.  This method is robust to irregularly sampled data and is fairly fast.  We will estimate our original track: 
 
-```{r vLike, cache=TRUE}
+```{r vLike}
 estimateUCVM(Z = ucvm1$Z, T = ucvm1$T, method = "vLike", CI=TRUE)
 ```
 
 This method gives very reliable confidence intervals, but may underestimate velocities. We can also run it on the irregularly sampled track from above:
-```{r vLike.irregular, cache=TRUE}
+```{r vLike.irregular}
 estimateUCVM(Z = ucvm2$Z, T = ucvm2$T, method = "vLike", CI=TRUE)
 ```
 The confidence intervals are more wide this time (due to a much smaller data set: `r length(ucvm2$Z)` versus `r length(ucvm1$Z)` data points), but the estimates should be fairly accurate. 
@@ -247,7 +247,7 @@ The confidence intervals are more wide this time (due to a much smaller data set
 
 The position likelihood (`zLike`) takes the complete correlation structure between the velocities and the positions to estimate the parameters.  It is prohibitively slow on a data set the size of `ucvm1`, but quite fast on the second (irregular, short) sampling: 
 
-```{r zLike.irregular, cache=TRUE}
+```{r zLike.irregular}
 estimateUCVM(Z = ucvm2$Z, T = ucvm2$T, method = "zLike", CI=TRUE)
 ```
 
@@ -257,14 +257,14 @@ Note, improvements in the parameter estimates and confidence intervals, and the 
 
 We (OO and EG) had independently worked out many of the details of the estimation of full position likelihood before we discovered that the same likelihood was estimated in a much more efficient way by Johnson et al. (2008), and encoded in an excellent package called `crawl` (*Correlated RAndom Walk Library*).  We have incorporated a wrapper for this package in `smoove` for the estimation of UCVM parameters - a fairly narrow application of the capabilities of `crawl`.  First, we run it on the irregular data set:
 
-```{r crawl1, cache=TRUE}
+```{r crawl1}
 with(ucvm2, estimateUCVM(Z = Z, T = T, method = "crawl"))
 ```
 The estimates and C.I.'s for $\nu$ and $\tau$ are very similar to the full position likelihood above.   The additional output is specific to the parameterization Johnson et al. use, the lower output (`nutau`) is consistent with the output for the other methods.  
 
 The `crawl` method can handle a very long ($n = 10000$) dataset as well.  
 
-```{r crawl2, cache=TRUE}
+```{r crawl2}
 with(ucvm1, estimateUCVM(Z = Z, T = T, method = "crawl"))
 ```
 
@@ -276,7 +276,7 @@ Estimating the RACVM processes is different mainly in that there are now four di
 
 In the examples below, we estimate the parameters from each of the RACVM simulations and them from a portion of actual kestrel flight data:
 
-```{r cache=TRUE}
+```{r}
 ucvm <- simulateRACVM(tau = 5, eta = 2, omega = 0, mu = 0, Tmax = 100, dt = .1)
 acvm <- simulateRACVM(tau = 5, eta = 2, omega = 0, mu = 2, Tmax = 100, dt = .1)
 rcvm <- simulateRACVM(tau = 5, eta = 2, omega = 2, mu = 0, Tmax = 100, dt = .1)
@@ -285,12 +285,12 @@ racvm <- simulateRACVM(tau = 5, eta = 2, omega = 2, mu = 2, Tmax = 100, dt = .1)
 
 ### 2.2.1. Unbiased CVM
 
-```{r ucvm, cache=TRUE, echo=FALSE, out.width = "4in"}
+```{r ucvm, echo=FALSE, out.width = "4in"}
 par(bty="l", mgp = c(1.5,0.25,0), tck=0.01, las=1); plot_track(ucvm$Z)
 ```
 
 
-```{r ucvm.fit, cache=TRUE, size = "small"}
+```{r ucvm.fit, size = "small"}
 with(ucvm, estimateRACVM(Z=Z, T=T, compare.models=TRUE))
 ```
 
@@ -305,28 +305,28 @@ Every time this document is compiled, the results change somewhat.  But in most 
 
 ### 2.2.2. Advective CVM
 
-```{r acvm, cache=TRUE, echo=FALSE, fig.height = 3, fig.width = 6}
+```{r acvm, echo=FALSE, fig.height = 3, fig.width = 6}
 par(bty="l", mgp = c(1.5,0.25,0), tck=0.01, las=1); plot_track(acvm$Z)
 ```
-```{r acvm.fit, cache=TRUE, size = "small"}
+```{r acvm.fit, size = "small"}
 with(acvm, estimateRACVM(Z=Z, T=T, model = "ACVM", compare.models=TRUE))
 ```
 
 ### 2.2.3. Rotational CVM
-```{r rcvm, cache=TRUE, echo=-1, out.width = "4in"}
+```{r rcvm, echo=-1, out.width = "4in"}
 par(bty="l", mgp = c(1.5,0.25,0), tck=0.01, las=1, col=rgb(0,0,0,.5)); plot_track(rcvm$Z)
 ```
-```{r rcvm.fit, cache=TRUE, size = "small"}
+```{r rcvm.fit, size = "small"}
 with(rcvm, estimateRACVM(Z=Z, T=T, model = "RCVM", compare.models=TRUE))
 ```
 
 
 ### 2.2.4. Rotational-Advective CVM
      
-```{r racvm, cache=TRUE, echo=-1, fig.height = 3, fig.width = 6}
+```{r racvm, echo=-1, fig.height = 3, fig.width = 6}
 par(bty="l", mgp = c(1.5,0.25,0), tck=0.01, las=1); plot_track(racvm$Z)
 ```
-```{r racvm.fit, cache=TRUE, size = "footnotesize"}
+```{r racvm.fit, size = "footnotesize"}
 with(racvm, estimateRACVM(Z=Z, T=T, model = "RACVM", compare.models=TRUE))
 ```
 
@@ -346,7 +346,7 @@ data(Kestrel); plot_track(Kestrel[,c("X","Y")], cex=0.3)
 
 We can analyze one portions of the kestrel's flight, mirroring the analysis in Gurarie (in review).  The following 90 second snippet is clearly advective and rotational:
 
-```{r K1, echo=-1, fig.height=4, cache=TRUE, fig.width = 8}
+```{r K1, echo=-1, fig.height=4, fig.width = 8}
   par(mar = c(0,2,0,0), oma = c(4,4,2,2), bty="l")
   K1 <- Kestrel[3360:3450,]
   with(K1, scan_track(x=X, y=Y))
@@ -354,14 +354,14 @@ We can analyze one portions of the kestrel's flight, mirroring the analysis in G
 
 The model selection confirms this (note that we specify the time unit of analysis - in this case, seconds).
 
-```{r K1.fit, cache=TRUE}
+```{r K1.fit}
 (fit1 <- with(K1, estimateRACVM(XY = cbind(X,Y), T = timestamp, spline=TRUE, 
                                 model = "RACVM", time.units = "sec")))
 ```
 
 The track is very regular but slightly coarse. We use the spline correction (though its impact is probably minimal).  The model selection strongly prefers an RACVM model.  The rotational speed is about 0.5 radians per second, the advective speed is around 4 m/sec. We feed these estimates back into the simulation algorithm to simulate a trajectory:  
 
-```{r K1.sim, echo=-1, fig.height=4, cache=TRUE, fig.width = 8}
+```{r K1.sim, echo=-1, fig.height=4, fig.width = 8}
 par(mar = c(0,2,0,0), oma = c(4,4,2,2), bty="l")
 p.fit1 <- with(fit1$results, list(eta=eta[1], tau = tau[1], 
                                   mu = mu.x[1] + 1i*mu.y[1], 
@@ -382,7 +382,7 @@ Change point analysis (like most of ecological analysis) is not an exact science
 
 Simulate a two-phase UCVM:
 
-```{r TwoPhaseCVM, fig.height = 4, echo=-1, fig.width = 6, cache=TRUE, fig.align="center"}
+```{r TwoPhaseCVM, fig.height = 4, echo=-1, fig.width = 6, fig.align="center"}
 par(bty="l")
 ucvm1 <- simulateUCVM(T=cumsum(rexp(100)), nu=2, tau=1, method="exact")
 ucvm2 <- simulateUCVM(T=cumsum(rexp(100)), nu=2, tau=10, v0 = ucvm1$V[100], method="exact")
@@ -393,7 +393,7 @@ plot_track(Z)
 
 The only parameter that changed in this simulation is the time scale - it is not necessarily easy to identify by eye where the model switched. The likelihood of all candidate change points within this track is found using the `findSingleBreakPoint` as follows:
 
-```{r fig.height = 4, echo=-1, cache=FALSE, fig.width = 6}
+```{r fig.height = 4, echo=-1, fig.width = 6}
 par(bty="l")
 findSingleBreakPoint(Z,T, method = "sweep")
 ```
@@ -436,7 +436,7 @@ for(i in 1:length(taus)){
 
 For the analysis, we will randomly sample (and order) 400 observations from the complete data:
 
-```{r plotMulticvm, echo =-1, fig.height = 4, fig.width = 6, cache=TRUE, fig.align="center"}
+```{r plotMulticvm, echo =-1, fig.height = 4, fig.width = 6, fig.align="center"}
 par(bty = "l", mar = c(0,4,0,0), oma = c(4,0,2,2), xpd = NA)
 multicvm <- data.frame(Z = Z.raw, T = T.raw)[sample(1:length(Z.raw), 400),] %>% arrange(T)
 with(multicvm, scan_track(z = Z, time = T))
@@ -458,12 +458,12 @@ simSweep <- with(multicvm, sweepRACVM(Z = Z, T = T,
                                       model = "ACVM", progress=FALSE))
 ```
 
-Toggling the `progress` to TRUE will provide reports on the progress of the analysis.  There is also an option to parallelize the analysis using the `doParallel` and `foreach` R packages.  This which can speed things up considerably (roughly in proportion to the number of cores on your processor).  An example of implementation: 
+Toggling the `progress` to TRUE will provide reports on the progress of the analysis.  There is also an option to parallelize the analysis using the `doFuture` and `foreach` R packages.  This which can speed things up considerably (roughly in proportion to the number of cores on your processor).  An example of implementation: 
 
-```{r simSweep.parallel, cache=TRUE, warning = FALSE, eval=FALSE, message = FALSE}
-require(foreach); require(doParallel)
-cl <- makeCluster(detectCores())
-registerDoParallel(cl)
+```{r simSweep.parallel, warning = FALSE, eval=FALSE, message = FALSE}
+require(foreach); require(doFuture)
+registerDoFuturel()
+plan(multisession)
 simSweep <- with(multicvm, sweepRACVM(Z = Z, T = T, windowsize = 80, windowstep = 5, 
                                       model = "ACVM", .parallel = TRUE))
 ```
@@ -511,7 +511,7 @@ getCPtable(CPs = CP.clustered, modelset = c("UCVM", "ACVM"), tidy = NULL)
 
 In the output of `selectRACVM`, the `extremes` column indicates which parameter showed significant changes in parameter values defined by no overlap in the 95\% confidence interval, and the `dAIC` and `dBIC` compare the change point model to the no change point model.  We can ask this function to tidy the selec1tion table according to any combination of several criteria: - by the differences, or by negative dAIC or dBIC, or by a mismatch in the models selected (see the help file for details). 
 
-```{r simGetCPtable2, cache=TRUE}
+```{r simGetCPtable2}
 getCPtable(CPs = CP.clustered, modelset = c("UCVM", "ACVM"),  iterate = TRUE)
 ``` 
 
@@ -535,7 +535,7 @@ simSweep %>% findCandidateChangePoints(clusterwidth = 4) %>%
 
 we get the correct result.  We can also expand our "model set" to include all four CVM model:
 
-```{r simSweepAllModels, cache=TRUE}
+```{r simSweepAllModels}
 simSweep %>% findCandidateChangePoints(clusterwidth = 10, verbose = FALSE) %>% 
   getCPtable(modelset ="all", criterion = "AIC")
 ```
@@ -621,13 +621,13 @@ with(k, scan_track(x=X, y=Y, time = timestamp))
 The window sweep can take a little time (approx. 40 s on my 4 core laptop, with the substantial speed-up of  `.parallel = TRUE`).  Helpfully, also, the function `sweepRACVM` can take `move` objects from the `move` package - which processed data stored on [Movebank](https://www.movebank.org/) and `ltraj` objects from the classic `adehabitatLT` movement analysis package. 
 
 ```{r echo = FALSE, eval= FALSE}
-require(doParallel)
-cl <- makeCluster(detectCores())
-registerDoParallel(cl)
+require(doFuture)
+registerDoFuture()
+plan(multisession)
 ```
 
 
-```{r sweepKestrel, cache=TRUE, message=FALSE, eval = FALSE}
+```{r sweepKestrel, message=FALSE, eval = FALSE}
 k.sweep <- with(k, sweepRACVM(Z = cbind(X,Y), T=timestamp, windowsize = 50, windowstep = 5, 
                             model = "RACVM", time.unit = "secs", progress=FALSE,
                             .parallel = TRUE))
@@ -656,7 +656,7 @@ k.CPtable <- getCPtable(CPs = k.CPs, modelset = "all", spline=TRUE)
 ```
 Note that in this implementation, we chose the option `spline=TRUE`.  The regularity and apparent precision of these data and the curvature of the track suggest that the spline approximation will give improved estimates of the parameters. 
 
-```{r set-options, echo=FALSE, cache=FALSE}
+```{r set-options, echo=FALSE}
 options(width=90)
 ```
 

@@ -4,12 +4,14 @@
 \name{simSweep}
 \alias{simSweep}
 \title{simSweep}
-\format{A matrix with 400 rows and 24 columns with the following notable attributes:
+\format{
+A matrix with 400 rows and 24 columns with the following notable attributes:
  \describe{
  \item{time}{a vector of times}
  \item{Z}{a complex vector of locations}
 
- }}
+ }
+}
 \usage{
 simSweep
 }

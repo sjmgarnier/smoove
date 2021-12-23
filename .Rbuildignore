@@ -1,9 +1,7 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^cran-comments.md$
-troubleshoot
-faridR
 .*[.]synctex[.]gz
-vignettes/smoove_cache
-vignettes/smoove_files
 ^CRAN-RELEASE$
+^doc$
+^Meta$

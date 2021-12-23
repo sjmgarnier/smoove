@@ -4,7 +4,8 @@
 \name{Kestrel}
 \alias{Kestrel}
 \title{Kestrel}
-\format{A data frame with 7829 rows and 13 columns.
+\format{
+A data frame with 7829 rows and 13 columns.
  \describe{
  \item{timestamp}{timestamp}
  \item{longitude}{longitude}
@@ -12,7 +13,8 @@
  \item{X}{X in UTM coordinate system}
  \item{Y}{Y in UTM coordinate system}
 
- }}
+ }
+}
 \source{
 https://www.datarepository.movebank.org/handle/10255/move.487
 }
