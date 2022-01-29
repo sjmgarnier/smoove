@@ -52,11 +52,12 @@ testCP <- function(Z, T, cp, start, end, modelset = "all", spline = FALSE, crite
             -2*fitboth$LL + log(length(Zboth)) * fitboth$k),
     K = c(Changepoint = fit1$k + fit2$k + 1, 
           NoChangepoint = fitboth$k),
+    LL = c(Changepoint = fit1$LL + fit2$LL, NoChangepoint = fitboth$LL),
     differences = c(paste(differences, collapse = ", "), NA))
   
   models <- data.frame(M1 = fit1$model, M2 = fit2$model, Mboth = fitboth$model)
   
-  return(list(testtable=testtable, models = models))
+  return(list(testtable = testtable, models = models))
 }
 
 
